@@ -33,6 +33,8 @@ NC_clean <- function() {
     pattern = "NC_DETECT_Respiratory_Regional_Influenza_only\\.csv$",
     full.names = TRUE
   ) |>
+    # exclude "2025-10-08"
+    # discard(~ stringr::str_detect(., "20251008")) |>
     (\(x) tibble(file = x))() |>
     mutate(
       as_of_date = stringr::str_extract(basename(file), "^[0-9]+") |>
@@ -80,6 +82,10 @@ NC_clean <- function() {
     ) |>
     arrange(target_end_date)
 
+  NC_clean <-
+    NC_clean |>
+    filter(if_all(everything(), ~ !is.na(.x)))
+
   stopifnot(
     all(colSums(is.na(NC_clean)) == 0),
     all(NC_clean$observation >= 0 & NC_clean$observation <= 100)
@@ -97,7 +103,6 @@ NC_clean <- function() {
 #     y = "Observation (%)"
 #   ) +
 #   theme_minimal()
-
 
 merge_and_write_csv <- function(data, file) {
   locations <- unique(data$location)
